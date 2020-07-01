@@ -1,18 +1,7 @@
-// module sc_cu (op, func, z, wmem, wreg, regrt, m2reg, aluc, shift,
-//               aluimm, pcsource, jal, sext);
 module sc_cu (op, func, z, wmem, wreg, regrt, m2reg, aluc, shift,
-              aluimm, pcsource, jal, sext, 
-              wpcir, 
-              rs, rt, mrn, 
-              mm2reg, mwreg, ern, em2reg, ewreg, fwda, fwdb);
-
+              aluimm, pcsource, jal, sext);
     input  [5:0] op, func;
     input        z;
-
-    input        mm2reg, mwreg, em2reg, ewreg;
-    input  [4:0] rs, rt, mrn, ern;
-    reg    [1:0] fwda, fwdb;
-
     output       wreg, regrt, jal, m2reg, shift, aluimm, sext, wmem;
     output [3:0] aluc;
     output [1:0] pcsource;
@@ -22,7 +11,7 @@ module sc_cu (op, func, z, wmem, wreg, regrt, m2reg, aluc, shift,
     wire i_sub  = r_type & func[5] & ~func[4] & ~func[3] &
                   ~func[2] &  func[1] & ~func[0];            //100010
     
-    // hamming code
+    // hamming weight
     wire i_hamm = r_type &  func[5] &  func[4] & ~func[3] &
                            ~func[2] &  func[1] & ~func[0];   // 110010
 
@@ -59,77 +48,29 @@ module sc_cu (op, func, z, wmem, wreg, regrt, m2reg, aluc, shift,
     wire i_jal  = ~op[5] & ~op[4] & ~op[3] & ~op[2] &  op[1] &  op[0]; //000011
     // ** FILLED IN - END **
 
-
-    assign wpcir = ~(em2reg & ( ern == rs | ern == rt ));  //lw Data Hazard
-
-
-
     assign pcsource[1] = i_jr | i_j | i_jal;
     assign pcsource[0] = (i_beq & z) | (i_bne & ~z) | i_j | i_jal;
 
-    assign wreg = (i_add  | i_sub | i_and | i_or   | i_xor  |
+    assign wreg = i_add  | i_sub | i_and | i_or   | i_xor  |
                    i_sll | i_srl | i_sra | i_addi | i_andi |
                    i_ori | i_xori| i_lw  | i_lui  | i_jal
-                   | i_hamm) & wpcir;
+                   | i_hamm;
 
     // ** FILLED IN - START ** // hamm: 1011
-    assign aluc[3] = (i_sra | i_hamm) & wpcir;
-    assign aluc[2] = (i_sub | i_or  | i_srl | i_sra | i_ori | i_lui) & wpcir;
-    assign aluc[1] = (i_xor | i_sll | i_srl | i_sra | i_xori | i_lui | i_hamm) & wpcir;
-    assign aluc[0] = (i_and | i_or  | i_sll | i_srl | i_sra | i_andi | i_ori | i_hamm) & wpcir;
+    assign aluc[3] = i_sra | i_hamm;
+    assign aluc[2] = i_sub | i_or  | i_srl | i_sra | i_ori | i_lui | i_beq | i_bne;
+    assign aluc[1] = i_xor | i_sll | i_srl | i_sra | i_xori | i_lui | i_hamm;
+    assign aluc[0] = i_and | i_or  | i_sll | i_srl | i_sra | i_andi | i_ori | i_hamm;
     // ** FILLED IN - END **
-    assign shift   = (i_sll | i_srl | i_sra) & wpcir;
+    assign shift   = i_sll | i_srl | i_sra ;
 
     // ** FILLED IN - START **
-    assign aluimm  = (i_addi| i_andi| i_ori | i_xori| i_lw  | i_sw  | i_lui) & wpcir;
-    assign sext    = (i_addi| i_lw  | i_sw  | i_beq | i_bne | i_lui) & wpcir;
-    assign wmem    = (i_sw) & wpcir;
-    assign m2reg   = (i_lw) & wpcir;
-    assign regrt   = (i_addi| i_andi| i_ori | i_xori| i_lw  | i_sw  | i_lui) & wpcir;
-    assign jal     = (i_jal) & wpcir;
+    assign aluimm  = i_addi| i_andi| i_ori | i_xori| i_lw  | i_sw  | i_lui;
+    assign sext    = i_addi| i_lw  | i_sw  | i_beq | i_bne | i_lui;
+    assign wmem    = i_sw;
+    assign m2reg   = i_lw;
+    assign regrt   = i_addi| i_andi| i_ori | i_xori| i_lw  | i_sw  | i_lui;
+    assign jal     = i_jal;
     // ** FILLED IN - END **
-
-
-
-   always @(*)
-   begin
-   if(ewreg & ~ em2reg & (ern != 0) & (ern == rs))
-        // prev alu ==> 直通
-           fwda<=2'b01;
-   else 
-      if (mwreg & ~ mm2reg & (mrn != 0) & (mrn == rs))
-        // prev *2 alu ==> 直通
-              fwda<=2'b10;
-      else  
-        // prev *2 RAM data output ==> 直通
-        if  (mwreg & mm2reg & (mrn != 0) & (mrn == rs))
-            fwda<=2'b11;
-        else 
-            // No 直通
-            fwda<=2'b00; 
-     end
-
-
-   always @(*)
-   begin
-   if(ewreg & ~ em2reg & (ern != 0) & (ern == rs))
-        // prev alu ==> 直通
-           fwdb<=2'b01;
-   else 
-      if (mwreg & ~ mm2reg & (mrn != 0) & (mrn == rs))
-        // prev *2 alu ==> 直通
-            fwdb<=2'b10;
-      else  
-        // prev *2 RAM data output ==> 直通
-        if  (mwreg & mm2reg & (mrn != 0) & (mrn == rs))
-            fwdb<=2'b11;
-        else 
-            // No 直通
-            fwdb<=2'b00; 
-     end
-
-
-
-
 
 endmodule

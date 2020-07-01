@@ -1,0 +1,5 @@
+main: 	lui $1, 0               # address of data[0]
+		addi $2, $0, 168
+loop: 	lw $4, 0($1)
+		sw $6, 0($2)
+		j loop

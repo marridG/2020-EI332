@@ -58,7 +58,7 @@ module sc_cu (op, func, z, wmem, wreg, regrt, m2reg, aluc, shift,
 
     // ** FILLED IN - START ** // hamm: 1011
     assign aluc[3] = i_sra | i_hamm;
-    assign aluc[2] = i_sub | i_or  | i_srl | i_sra | i_ori | i_lui;
+    assign aluc[2] = i_sub | i_or  | i_srl | i_sra | i_ori | i_lui | i_beq | i_bne;
     assign aluc[1] = i_xor | i_sll | i_srl | i_sra | i_xori | i_lui | i_hamm;
     assign aluc[0] = i_and | i_or  | i_sll | i_srl | i_sra | i_andi | i_ori | i_hamm;
     // ** FILLED IN - END **

@@ -1,0 +1,18 @@
+DEPTH = 32;           % Memory depth、width are required %
+WIDTH = 32;           % Enter a decimal number %
+ADDRESS_RADIX = HEX;  % Address and value radixes are optional %
+DATA_RADIX = HEX;     % Enter BIN, DEC, HEX, or OCT; unless %
+CONTENT               % otherwise specified, radixes = HEX %
+
+BEGIN
+[0..1F] : 00000000;   % Range--Every address from 0 to 1F = 00000000 %
+
+       0 : 0000AAAA;       %(0) data[0] %
+       1 : 55550000;       %(4) data[1] %
+       2 : 30910200;       %(8) data[2] change to your student number’s last 8 digits%
+       4 : 00000019;       %(10) data[3] %
+       5 : 00000012;       %(14) data[4] %
+       6 : 00000002;       %(18) data[5] %
+       7 : 00000078;       %(1C) data[6] %
+       9 : 00000010;       %(24) data[7] %
+End ;
